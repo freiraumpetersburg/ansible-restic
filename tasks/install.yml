@@ -1,0 +1,71 @@
+---
+# Create restic user
+- name: Ensure group "{{ restic_user }}" exists
+  group:
+    name: "{{ restic_user }}"
+    state: present
+  become: yes
+
+- name: Create restic user
+  user:
+    name: "{{ restic_user }}"
+    group: "{{ restic_user }}"
+    home: "{{ restic_home }}"
+    shell: /bin/zsh
+  become: yes
+
+- name: Ensure restic directories exist
+  file:
+    state: "directory"
+    path: "{{ item }}"
+    mode: 0750
+    owner: "{{ restic_user }}"
+    group: "{{ restic_user }}"
+  with_items:
+    - /var/log/restic
+    - "{{ restic_home }}/bin"
+    - "{{ restic_home }}/backup"
+  become: yes
+
+# Download restic
+- name: Set restic_url
+  set_fact:
+    restic_url: 'https://github.com/restic/restic/releases/download/v{{ restic_version }}/restic_{{ restic_version }}_{{ ansible_system | lower }}_{{ _platform_map[ansible_architecture] | default(ansible_architecture) }}.bz2'
+  when: restic_url is not defined
+
+- name: Download client binary
+  get_url:
+    url: "{{ restic_url }}"
+    dest: "{{ restic_home }}/restic.bz2"
+    force: True
+  register: get_url_restic
+  become: yes
+
+- name: Decompress the binary
+  shell: "bzip2 -dc {{ get_url_restic.dest }} > {{ restic_home }}/bin/restic-{{ restic_version }}"
+  args:
+    creates: "{{ restic_home }}/bin/restic-{{ restic_version }}"
+  become: yes
+
+- name: Ensure permissions are correct
+  file:
+    path: "{{ restic_home }}/bin/restic-{{ restic_version }}"
+    mode: 0750
+    owner: "root"
+    group: "{{ restic_user }}"
+  become: yes
+
+- name: Set cap_dac_read_search=+ep on the restic binary
+  capabilities:
+    path: "{{ restic_home }}/bin/restic-{{ restic_version }}"
+    capability: cap_dac_read_search=+ep
+    state: present
+  become: yes
+
+- name: Create symbolic link to the correct version
+  file:
+    src: "{{ restic_home }}/bin/restic-{{ restic_version }}"
+    path: "{{ restic_install_path }}/restic"
+    state: link
+    force: True
+  become: yes

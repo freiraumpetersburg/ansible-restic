@@ -1,0 +1,23 @@
+---
+# trigger restic backup
+# we're excluding forget jobs here
+- name: "restic backup"
+  shell: |
+    {% macro tags(tags) -%}
+    {% if tags is defined %}{% for tag in tags %} --tag {{ tag }}{% endfor %}{% endif %}
+    {%- endmacro %}
+    {% if item.type == 'db_mysql' %}
+    mysqldump --routines --add-drop-table --default-character-set=utf8 {{ item.arg }} {{ restic_stdin }} --stdin-filename {{ item.type }}_{{ item.arg }}.sql {{ tags(item.tags) }}
+    {% elif item.type == 'db_pgsql' %}
+    su -c '/usr/bin/pg_dump --encoding=UTF8 "{{ item.arg }}"' postgres  {{ restic_stdin }} --stdin-filename {{ item.type }}_{{ item.arg }}.sql {{ tags(item.tags) }}
+    {% elif item.type == 'files' %}
+    restic backup --one-file-system {{ item.folders | join(' ') }}
+    {% endif %}
+  with_items: "{{ restic_repo.jobs | selectattr('type', 'ne', 'forget') | list }}"
+  environment:
+    RESTIC_REPOSITORY: "{{ restic_repo.url | trim }}"
+    RESTIC_PASSWORD: "{{ restic_repo.password | trim }}"
+  vars:
+    restic_repo: "{{ restic_repos | selectattr('name', 'equalto', restic_instant_backup_repo) | list | first }}"
+    restic_stdin: "| restic backup --stdin"
+  become: yes

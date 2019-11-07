@@ -1,0 +1,22 @@
+---
+- name: Install packages for restic
+  include: "packages.yml"
+
+- name: Check if downloaded binary is present
+  stat:
+    path: "{{ restic_home }}/bin/restic-{{ restic_version }}"
+  register: restic_executable
+  become: yes
+
+- name: Check if installed binary is present
+  stat:
+    path: "{{ restic_install_path }}/restic"
+  register: restic_installed
+  become: yes
+
+- name: Install restic
+  include: "install.yml"
+  when: not restic_executable.stat.exists or not restic_installed.stat.exists
+
+- name: Configure restic jobs
+  include: "configure.yml"

@@ -1,0 +1,18 @@
+---
+# update the repositories
+- name: update repositories
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  when: update_repositories is defined and update_repositories
+  become: yes
+
+# install packages
+- name: install packages
+  apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - fuse   # for mounting
+  become: yes
