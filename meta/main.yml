@@ -1,0 +1,21 @@
+galaxy_info:
+  role_name: restic
+  author: shoetten
+  description: Ansible Role for Restic Backups
+  company: Kulturverein Petersburg e.V.
+  license: BSD
+
+  min_ansible_version: 1.2
+
+  platforms:
+  - name: Debian
+    versions:
+    - stretch
+    - buster
+
+  galaxy_tags:
+    - system
+    - restic
+    - backup
+
+dependencies: []
