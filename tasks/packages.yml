@@ -15,4 +15,5 @@
   vars:
     packages:
       - fuse   # for mounting
+      - libcap2-bin   # to manage linux capabilities with getcap & setcap
   become: yes
