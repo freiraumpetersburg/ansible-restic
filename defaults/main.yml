@@ -4,4 +4,4 @@ restic_install_path: "/usr/local/bin"
 restic_password: "{{ vault_restic_password }}"
 restic_repos: []
 restic_user: restic
-restic_version: "0.9.5"
+restic_version: "0.9.6"
